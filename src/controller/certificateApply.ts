@@ -5,6 +5,7 @@ import { Apply } from "../model/certificateApply";
 import { TryCatch } from "../middlewares/error";
 import { myCache } from "../server";
 import { sendEmail } from "../utils/emailService";
+import { User } from "../model/user";
 
 export const newCertificate = TryCatch(
   async (
@@ -16,13 +17,24 @@ export const newCertificate = TryCatch(
     if (!user || !userInfo) {
       return next(new ErrorHandler("Please enter required fields", 400));
     }
-    await Apply.create({
-      user,
-      userInfo,
-    });
-    return res.status(201).json({
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: user },  
+      { 
+        $set: { 
+          status: 'Applied',
+          userInfo: userInfo,  
+        } 
+      },
+      { new: true, runValidators: true } 
+    );
+    if (!updatedUser) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    return res.status(200).json({
       success: true,
       message: "Applied successfully",
+      user: updatedUser,  
     });
   }
 );
@@ -32,7 +44,7 @@ export const allApplications = TryCatch(async (req, res, next) => {
   let applies = [];
   if (myCache.has(key)) applies = JSON.parse(myCache.get(key) as string);
   else {
-    applies = await Apply.find().sort({ createdAt: -1 });
+    applies = await User.find().sort({ createdAt: -1 });
     myCache.set(key, JSON.stringify(applies));
   }
 
@@ -52,7 +64,7 @@ export const getSingleRequest = TryCatch(async (req, res, next) => {
   
     if (myCache.has(key)) apply = JSON.parse(myCache.get(key) as string);
     else {
-      apply = await Apply.findById(id);
+      apply = await User.findById(id);
       if (!apply) return next(new ErrorHandler("Application Not Found", 404));
       myCache.set(key, JSON.stringify(apply));
     }
@@ -75,7 +87,7 @@ export const processApplicationStatus = TryCatch(async (req: Request, res: Respo
       return next(new ErrorHandler("Invalid status. Status must be 'Accepted' or 'Rejected'", 400));
     }
   
-    const application = await Apply.findById(id);
+    const application = await User.findById(id);
     if (!application) {
       return next(new ErrorHandler("Application not found", 404));
     }
@@ -87,7 +99,7 @@ export const processApplicationStatus = TryCatch(async (req: Request, res: Respo
     // Sending email if status changed
     if (application.status !== previousStatus) {
       try {
-        const userEmail = application.userInfo[0]?.email; 
+        const userEmail = application.email; 
         if (userEmail) {
           const htmlContent: string = `
           <!DOCTYPE html>
@@ -115,8 +127,8 @@ export const processApplicationStatus = TryCatch(async (req: Request, res: Respo
           </head>
           <body>
             <h2>Application Status Update</h2>
-            <p>Dear ${application.userInfo[0].name},</p>
-            <p>We are excited to inform you that the status of your application has been updated 🎉 for ${application.userInfo[0].batch}'s ${application.userInfo[0].role} intern certificate.</p>
+            <p>Dear ${application.name},</p>
+            <p>We are excited to inform you that the status of your application has been updated 🎉 for ${application.batch}'s ${application.role} intern certificate.</p>
             <p class="status">
               <strong>New Status: <span>${application.status}</span></strong>
             </p>

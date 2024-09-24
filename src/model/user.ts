@@ -15,6 +15,11 @@ const userDetails = new mongoose.Schema({
         required: [true, "Please enter email"],
         validate: validator.default.isEmail,
     },
+    status:{
+        type: String,
+        enum: ['Normal','Applied','Accepted', 'Rejected'],
+        default: 'Normal',
+    },
     password:{
         type: String,
         required: [true, "Please enter a password"],
