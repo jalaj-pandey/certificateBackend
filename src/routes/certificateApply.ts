@@ -1,6 +1,7 @@
 import express from 'express';
-import { allApplications, getSingleRequest, newCertificate, processApplicationStatus } from '../controller/certificateApply';
+import { allApplications, newCertificate, processApplicationStatus } from '../controller/certificateApply';
 import { adminOnly } from '../middlewares/admin';
+import { applyForCertificate, getCertificate } from '../controller/certificateController';
 
 const router = express.Router();
 
@@ -8,8 +9,10 @@ router.post('/new-apply', newCertificate)
 
 router.get('/all', adminOnly, allApplications)
 
-// router.get('/apply', adminOnly, getSingleRequest)
-
 router.patch('/process-status/:id', adminOnly,processApplicationStatus)
+
+router.post('/applyc', applyForCertificate);
+router.get('/getc/:userId/:certificateId', getCertificate);
+
 
 export default router;
