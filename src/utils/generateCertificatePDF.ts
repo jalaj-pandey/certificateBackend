@@ -61,9 +61,9 @@ export const generateCertificatePDF = async (
   isWebDevelopment: boolean
 ) => {
   
-  const imagePath = path.resolve(__dirname, "../assets/cert.png");
-  const fontPath = path.resolve(__dirname, "../assets/AlexBrush-Regular.ttf");
-  const fontPaths = path.resolve(__dirname, "../assets/AlegreyaSans-Bold.ttf");
+  const imagePath = path.resolve(__dirname, "../utils/cert.png");
+  const fontPath = path.resolve(__dirname, "../utils/AlexBrush-Regular.ttf");
+  const fontPaths = path.resolve(__dirname, "../utils/AlegreyaSans-Bold.ttf");
 
   
   if (!fs.existsSync(imagePath)) {
