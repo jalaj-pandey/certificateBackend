@@ -43,13 +43,13 @@ const userDetails = new mongoose.Schema(
       enum: ["male", "female"],
       required: [true, "Enter your gender"],
     },
-    isWebDevelopment: { type: Boolean, default: false },
     batch: {
       type: String,
       required: [true, "Please select your batch"],
       enum: batches,
       trim: true,
     },
+    isWebDevelopment: { type: Boolean, default: false },
     phoneNo: {
       type: String,
       unique: [true, "This phone number is already registered"],

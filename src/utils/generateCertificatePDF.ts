@@ -30,17 +30,54 @@ const addMonths = (date: Date, months: number): Date => {
   return newDate;
 };
 
+const wrapText = (text: string, maxWidth: number, font: any, fontSize: number): string[] => {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let currentLine = "";
+
+  words.forEach((word) => {
+    const testLine = currentLine + (currentLine ? " " : "") + word;
+    const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+    if (testWidth < maxWidth) {
+      currentLine = testLine;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+};
+
 export const generateCertificatePDF = async (
   name: string,
   branch: string,
   date: Date,
   isWebDevelopment: boolean
 ) => {
-  const imagePath = path.join(__dirname, "../assets/cert.png");
+  
+  const imagePath = path.resolve(__dirname, "../assets/cert.png");
+  const fontPath = path.resolve(__dirname, "../assets/AlexBrush-Regular.ttf");
+  const fontPaths = path.resolve(__dirname, "../assets/AlegreyaSans-Bold.ttf");
+
+  
+  if (!fs.existsSync(imagePath)) {
+    throw new Error(`Image file not found at path: ${imagePath}`);
+  }
+  if (!fs.existsSync(fontPath)) {
+    throw new Error(`Font file not found at path: ${fontPath}`);
+  }
+  if (!fs.existsSync(fontPaths)) {
+    throw new Error(`Font file not found at path: ${fontPaths}`);
+  }
+
   const imageBytes = fs.readFileSync(imagePath);
-
   const pdfDoc = await PDFDocument.create();
-
   pdfDoc.registerFontkit(fontkit);
 
   const backgroundImage = await pdfDoc.embedPng(imageBytes);
@@ -55,26 +92,16 @@ export const generateCertificatePDF = async (
     height: backgroundDims.height,
   });
 
-  const fontPath = path.join(__dirname, "../assets/AlexBrush-Regular.ttf");
   const font = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-
   const fontBytes = fs.readFileSync(fontPath);
   const customFont = await pdfDoc.embedFont(fontBytes);
 
-  const fontPaths = path.join(__dirname, "../assets/AlegreyaSans-Bold.ttf");
   const fontBytess = fs.readFileSync(fontPaths);
   const customFontt = await pdfDoc.embedFont(fontBytess);
 
   const textColor = rgb(0, 0, 0);
-
   const nameX = 800;
   const nameY = 700;
-  const branchX = 650;
-  const branchY = 557;
-  const nameeX = 800;
-  const nameeY = 607;
-  const dateX = 800;
-  const dateY = 607;
   const certNumberX = 1450;
   const certNumberY = 330;
 
@@ -88,22 +115,6 @@ export const generateCertificatePDF = async (
     color: textColor,
   });
 
-  page.drawText(name, {
-    x: nameeX,
-    y: nameeY,
-    size: 30,
-    font: customFontt,
-    color: textColor,
-  });
-
-  page.drawText(branch, {
-    x: branchX,
-    y: branchY,
-    size: 30,
-    font: customFontt,
-    color: textColor,
-  });
-
   page.drawText(certificateNumber, {
     x: certNumberX,
     y: certNumberY,
@@ -112,14 +123,42 @@ export const generateCertificatePDF = async (
     color: textColor,
   });
 
+  const contentText = `This is to certify that ${name} has successfully completed a 4-month internship as a ${branch} at Edquest. During his tenure, he demonstrated outstanding technical skills, creativity, and dedication, contributing significantly to our AI projects. We commend his excellent work and wish him the best in his future endeavors.`;
+
+  const fontSize = 30;
+  const lineSpacing = 20;
+  const textY = 600;
+  const pageWidth = page.getWidth();
+  const maxTextWidth = pageWidth - 600;
+
+  const wrappedTextLines = wrapText(contentText, maxTextWidth, customFontt, fontSize);
+
+  wrappedTextLines.forEach((line, index) => {
+    const textWidth = customFontt.widthOfTextAtSize(line, fontSize);
+    const textX = (pageWidth - textWidth) / 2;
+
+    page.drawText(line, {
+      x: textX,
+      y: textY - index * (fontSize + lineSpacing),
+      size: fontSize,
+      font: customFontt,
+      color: textColor,
+    });
+  });
+
   const formattedStartDate = formatDate(date);
   const formattedEndDate = formatDate(addMonths(date, 3));
-
   const dateRange = `${formattedStartDate} To ${formattedEndDate}`;
 
   const pdfBytes = await pdfDoc.save();
 
-  const pdfPath = `./certificates/certificate_${name.replace(/ /g, "_")}.pdf`;
+  
+  const pdfDirectory = path.resolve(__dirname, './certificates');
+  if (!fs.existsSync(pdfDirectory)) {
+    fs.mkdirSync(pdfDirectory, { recursive: true });
+  }
+
+  const pdfPath = path.join(pdfDirectory, `certificate_${name.replace(/ /g, "_")}.pdf`);
   fs.writeFileSync(pdfPath, pdfBytes);
 
   return pdfPath;

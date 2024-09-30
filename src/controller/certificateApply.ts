@@ -204,9 +204,12 @@ const applyForCertificateAutomatically = async (userId: string): Promise<Certifi
     console.log(`PDF generated at: ${pdfPath}`);
     
     
-    const certificateId = `cert-${Date.now()}`;
-    user.certificates.push({ certificateId, pdfPath });
-    
+    const certificateId = generateCertificateNumber(isWebDevelopment);
+    await User.findByIdAndUpdate(
+      userId,
+      { $set: { certificates: [{ certificateId, pdfPath }] } },  
+      { new: true }  
+    );    
     await user.save();
     console.log("User certificates updated successfully.");
 
@@ -215,4 +218,16 @@ const applyForCertificateAutomatically = async (userId: string): Promise<Certifi
     console.error("Error generating certificate:", error);
     return { success: false }; 
   }
+};
+let webDevelopmentCounter = 1;
+let otherCounter = 1;
+
+const generateCertificateNumber = (isWebDevelopment: boolean): string => {
+  const prefix = isWebDevelopment ? "EDAI" : "EDWD";
+  const year = new Date().getFullYear().toString().slice(-2);
+
+  const counter = isWebDevelopment ? webDevelopmentCounter++ : otherCounter++;
+  const certificateNumber = `C${String(counter).padStart(3, "0")}`;
+
+  return `${prefix}-${year}-${certificateNumber}`;
 };

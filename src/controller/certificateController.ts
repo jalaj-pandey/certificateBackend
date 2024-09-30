@@ -1,13 +1,8 @@
 
 
-import { Request, Response, NextFunction } from "express";
-import { generateCertificatePDF } from "../utils/generateCertificatePDF";
+import { NextFunction, Request, Response } from "express";
 import { User } from "../model/user";
-import { gfs } from "../server";
-import path from "path";
-import { TryCatch } from "../middlewares/error";
-import ErrorHandler from "../types/utility-classes";
-import { sendEmail } from "../utils/emailService";
+import { generateCertificatePDF } from "../utils/generateCertificatePDF";
 
 
 const generatedCertificates: {
@@ -43,11 +38,15 @@ export const applyForCertificate = async (
       user.isWebDevelopment
     );
 
-    
-    const certificateId = `cert-${Date.now()}`;
+    const isWebDevelopment = user.batch === 'Web Development';
+    const certificateId = generateCertificateNumber(isWebDevelopment);
 
     
-    user.certificates.push({ certificateId, pdfPath });
+    await User.findByIdAndUpdate(
+      userId,
+      { $set: { certificates: [{ certificateId, pdfPath }] } },  
+      { new: true }  
+    ); 
     await user.save(); 
 
     
@@ -101,4 +100,17 @@ export const getCertificate = async (
   } catch (error) {
     next(error); 
   }
+};
+
+let webDevelopmentCounter = 1;
+let otherCounter = 1;
+
+const generateCertificateNumber = (isWebDevelopment: boolean): string => {
+  const prefix = isWebDevelopment ? "EDWD" : "EDAI";
+  const year = new Date().getFullYear().toString().slice(-2);
+
+  const counter = isWebDevelopment ? webDevelopmentCounter++ : otherCounter++;
+  const certificateNumber = `C${String(counter).padStart(3, "0")}`;
+
+  return `${prefix}-${year}-${certificateNumber}`;
 };
