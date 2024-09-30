@@ -34,6 +34,7 @@ app.get("/",(req,res)=>{
     res.send("yea workinggg")
 })
 app.use('/certificates', express.static(path.resolve(__dirname, '../certificates')));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 
 export let gfs: any;
