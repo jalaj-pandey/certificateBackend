@@ -111,6 +111,8 @@ export const userLogin = async(req: Request, res: Response) => {
           email: user.email,
           phoneNo: user.phoneNo,
           role: user.role,
+          status: user.status,
+          certificates: user.certificates
         },
       });
 
