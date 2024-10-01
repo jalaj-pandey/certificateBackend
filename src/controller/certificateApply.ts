@@ -104,15 +104,19 @@ export const processApplicationStatus = TryCatch(
     application.status = status;
     await application.save();
 
-    
     if (application.status !== previousStatus) {
       try {
         const userEmail = application.email;
         if (userEmail) {
-          
           if (application.status === "Accepted") {
             const certResponse = await applyForCertificateAutomatically(application._id.toString());
-            if (certResponse.success && certResponse.pdfPath) {
+            
+            if (certResponse.success) {
+              const fileName = `certificate_${application.name.replace(/\s+/g, '_')}.pdf`; 
+              const relativePath = `certificates/${fileName}`;
+              
+              const fullUrl = `https://certificatebackend-mks5.onrender.com/${relativePath}`;
+              
               const htmlContent = `
               <!DOCTYPE html>
               <html>
@@ -144,7 +148,7 @@ export const processApplicationStatus = TryCatch(
                 <p class="status">
                   <strong>New Status: <span>${application.status}</span></strong>
                 </p>
-                <p>Download your certificate <a href="${certResponse.pdfPath}">here</a>.</p>
+                <p>Download your certificate <a href="${fullUrl}">here</a>.</p>
                 <p>Thank you for your patience. If you have any questions, feel free to reach out to our support team.</p>
                 <p>Best regards,</p>
                 <p><strong>The Edquest Team</strong></p>
@@ -157,7 +161,6 @@ export const processApplicationStatus = TryCatch(
               await sendEmail(userEmail, "Application Status Update - Edquest", htmlContent);
             }
           } else {
-            
             const htmlContent = `
             <h2>Application Status Update</h2>
             <p>Dear ${application.name},</p>
@@ -183,6 +186,7 @@ export const processApplicationStatus = TryCatch(
     });
   }
 );
+
 
 
 const applyForCertificateAutomatically = async (userId: string): Promise<CertificateResponse> => {
