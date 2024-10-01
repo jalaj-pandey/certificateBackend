@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && node dist/copy-assets.js",
+    "build": "tsc && npm run copy-assets",
+    "copy-assets": "copyfiles -u 1 src/utils/* dist/",
     "start": "npx tsc && node  ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon -r ts-node/register ./src/server.ts"
@@ -45,6 +46,7 @@
     "@types/node": "^22.5.4",
     "@types/nodemailer": "^6.4.15",
     "@types/validator": "^13.12.1",
+    "copyfiles": "^2.4.1",
     "nodemon": "^3.1.7",
     "typescript": "^5.5.4"
   }
