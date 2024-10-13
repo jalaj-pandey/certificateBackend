@@ -110,13 +110,28 @@ export const processApplicationStatus = TryCatch(
         if (userEmail) {
           if (application.status === "Accepted") {
             const certResponse = await applyForCertificateAutomatically(application._id.toString());
-            
+
             if (certResponse.success) {
+              const isWebDevelopment = application.batch === 'Web Development';
+              const certificateId = generateCertificateNumber(isWebDevelopment);
+
+              const pdfPath = await generateCertificatePDF(
+                application.name,
+                application.batch,
+                application.createdAt,
+                isWebDevelopment
+              );
+
+              await User.findByIdAndUpdate(
+                application._id,
+                { $set: { certificates: [{ certificateId, pdfPath }] } },
+                { new: true }
+              );
+
               const fileName = `certificate_${application.name.replace(/\s+/g, '_')}.pdf`; 
               const relativePath = `certificates/${fileName}`;
-              
               const fullUrl = `https://certificatebackend-mks5.onrender.com/${relativePath}`;
-              
+
               const htmlContent = `
               <!DOCTYPE html>
               <html>
@@ -154,11 +169,19 @@ export const processApplicationStatus = TryCatch(
                 <p><strong>The Edquest Team</strong></p>
                 
                 <hr style="border: 0; border-top: 1px solid #ccc;" />
-                <p class="footer">Please do not reply to this email. Visit our <a href="https:
+                <p class="footer">Please do not reply to this email. Visit our <a href="https://edquest.com/support">Support Page</a> for further assistance.</p>
               </body>
               </html>
               `;
+
               await sendEmail(userEmail, "Application Status Update - Edquest", htmlContent);
+
+              return res.status(200).json({
+                success: true,
+                message: "Application Processed and Certificate Generated Successfully",
+                certificateId,
+                fullUrl,
+              });
             }
           } else {
             const htmlContent = `
@@ -170,7 +193,6 @@ export const processApplicationStatus = TryCatch(
             `;
             await sendEmail(userEmail, "Application Status Update - Edquest", htmlContent);
           }
-          console.log("Email sent successfully");
         } else {
           console.log("No valid email address found for sending notification");
         }
@@ -186,6 +208,7 @@ export const processApplicationStatus = TryCatch(
     });
   }
 );
+
 
 
 

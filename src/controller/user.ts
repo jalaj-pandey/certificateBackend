@@ -12,7 +12,7 @@ interface CreateUserRequest extends Request {
         name: string;
         email: string;
         password: string;
-        role: "admin" | "user" | "intern";
+        role: "admin" | "user";
         gender: "male" | "female";
         batch: "Web Development" | "Gen AI";
         phoneNo: number;
@@ -109,6 +109,7 @@ export const userLogin = async(req: Request, res: Response) => {
           id: user._id,
           name: user.name,
           email: user.email,
+          batch: user.batch,
           phoneNo: user.phoneNo,
           role: user.role,
           status: user.status,
