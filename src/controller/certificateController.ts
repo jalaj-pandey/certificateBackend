@@ -21,14 +21,8 @@ export const applyForCertificate = async (
         .json({ success: false, message: "User not found" });
     }
 
-    
-    
-    await User.findByIdAndUpdate(
-      userId,
-      { new: true }  
-    ); 
-    await user.save(); 
-
+    user.status = "Applied";
+    await user.save();
     
     res.status(200).json({
       success: true,
