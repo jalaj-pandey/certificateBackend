@@ -45,7 +45,8 @@ export const allApplications = TryCatch(async (req, res, next) => {
   let applies = [];
   if (myCache.has(key)) applies = JSON.parse(myCache.get(key) as string);
   else {
-    applies = await User.find().sort({ createdAt: -1 });
+    applies = await User.find({ status: { $in: ["Applied", "Accepted", "Rejected"] } })
+    .sort({ createdAt: -1 });
     myCache.set(key, JSON.stringify(applies));
   }
 
