@@ -153,7 +153,7 @@ export const generateCertificatePDF = async (
   const pdfBytes = await pdfDoc.save();
 
   
-  const pdfDirectory = path.resolve(__dirname, './certificates');
+  const pdfDirectory = path.resolve(__dirname, './utils/certificates');
   if (!fs.existsSync(pdfDirectory)) {
     fs.mkdirSync(pdfDirectory, { recursive: true });
   }
